@@ -382,12 +382,14 @@ function toNaryString(num, n) {
  *   ['/web/favicon.ico', '/web-scripts/dump', '/verbalizer/logs'] => '/'
  */
 function getCommonDirectoryPath(pathes) {
-  const map = pathes.map((x) => x.slice(1).split('/')).flat();
-  const set = new Set(map);
-  return [...set].reduce((a, c) => (map.indexOf(c) !== map.lastIndexOf(c) ? `${a}${c}/` : a), '/');
+  const map = pathes.map((x) => x.split('/'))
+    .map((path) => path.map((x) => (x.length ? x : '/')));
+  const set = new Set(map.flat());
+  const set2 = [...set].filter((x) => map.every((path) => path.includes(x)));
+  return set2[0] === '/'
+    ? `/${set2.slice(1).join('/')}${set2.length > 1 ? '/' : ''}`
+    : `${set2.join('/')}${set2.length > 1 ? '/' : ''}`;
 }
-
-// console.log(getCommonDirectoryPath(['/web/images/image1.png', '/web/images/image2.png']));
 
 
 /**
@@ -408,8 +410,19 @@ function getCommonDirectoryPath(pathes) {
  *                         [ 6 ]]
  *
  */
-function getMatrixProduct(/* m1, m2 */) {
-  throw new Error('Not implemented');
+function getMatrixProduct(m1, m2) {
+  const res = [];
+  for (let i = 0; i < m1.length; i += 1) {
+    res[i] = [];
+    for (let j = 0; j < m2[0].length; j += 1) {
+      let sum = 0;
+      for (let k = 0; k < m1[0].length; k += 1) {
+        sum += m1[i][k] * m2[k][j];
+      }
+      res[i][j] = sum;
+    }
+  }
+  return res;
 }
 
 
@@ -443,8 +456,46 @@ function getMatrixProduct(/* m1, m2 */) {
  *    [    ,   ,    ]]
  *
  */
-function evaluateTicTacToePosition(/* position */) {
-  throw new Error('Not implemented');
+function evaluateTicTacToePosition(position) {
+  const transposed = position.map((_, i) => position.map((row) => row[i]));
+  const straightMoves = () => [...position, ...transposed];
+  const isStraightWinner = (symbol) => straightMoves()
+    .some((moves) => moves.length === position.length
+      && moves.every((move) => move === symbol));
+
+  const diagonalMoves = () => {
+    const res = [];
+    const equalBasedDiagonal = [];
+    const sumBasedDiagonal = [];
+
+    for (let row = 0; row < position.length; row += 1) {
+      for (let col = 0; col < position.length; col += 1) {
+        if (row === col) {
+          equalBasedDiagonal.push(position[row][col]);
+        }
+      }
+    }
+
+    for (let row = 0; row < position.length; row += 1) {
+      for (let col = 0; col < position.length; col += 1) {
+        if (row + col === position.length - 1) {
+          sumBasedDiagonal.push(position[row][col]);
+        }
+      }
+    }
+
+    res.push(equalBasedDiagonal, sumBasedDiagonal);
+    return res;
+  };
+
+  const isDiagonalWinner = (symbol) => diagonalMoves()
+    .some((moves) => moves.every((move) => move === symbol));
+
+  const isWinner = (symbol) => isStraightWinner(symbol) || isDiagonalWinner(symbol);
+
+  if (isWinner('X')) return 'X';
+  if (isWinner('0')) return '0';
+  return undefined;
 }
 
 
